@@ -1,26 +1,41 @@
 from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import FileResponse, StreamingResponse
-import cv2
-from PIL import Image
-import io
-import tempfile
-import os
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pathlib import Path
-
-
+import os
+import tempfile
 from tennis_shot_identification_and_counts import run
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
 
 @app.post("/process_video")
 async def process_video(file: UploadFile = File(...)):
-    with tempfile.NamedTemporaryFile(delete=True) as temp_file:
+    """
+    Process the uploaded video file.
+
+    Parameters:
+    - file: UploadFile object representing the uploaded video file.
+
+    Returns:
+    - If the video processing is successful, returns the processed video file as a FileResponse object.
+    - If there is an error during video processing, returns a dictionary with an "error" key.
+
+    """
+    _, file_extension = os.path.splitext(file.filename)
+
+    with tempfile.NamedTemporaryFile(delete=True, suffix=file_extension) as temp_file:
         temp_file.write(await file.read())
         temp_file.seek(0)
 
-        run(source="temp_file.name", device="0")
+        run(source=temp_file.name, device="0")
 
-        # Test if the video file exists and can be read
         try:
             output_video_path = Path(temp_file.name.split(".")[0] + "_wed.mp4")
             if output_video_path.exists() and output_video_path.is_file():
@@ -28,10 +43,6 @@ async def process_video(file: UploadFile = File(...)):
         finally:
             if output_video_path.exists():
                 output_video_path.unlink()
-
-    # If the process fails, return an error response
     return {"error": "Failed to process the video"}
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+app = FastAPI()
