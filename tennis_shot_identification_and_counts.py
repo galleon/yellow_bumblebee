@@ -315,5 +315,3 @@ def run(poseweights='yolov7-w6-pose.pt', source='pose.mp4', device='cpu', names 
 #     opt = parse_opt()
 #     strip_optimizer(opt.device, opt.poseweights)
 #     main(opt)
-
-run(source="/Users/alleon_g/code/tennis_vision/VideoInput/video_input2.mp4")
